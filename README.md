@@ -4,12 +4,12 @@ yam Cookbook
 
 Requirements
 ------------
- apt
+ apt,
  swap
 
 e.g.
 #### packages
-screen
+screen,
 numactl
 
 Attributes

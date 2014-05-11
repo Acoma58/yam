@@ -19,11 +19,11 @@ package "numactl" do
  action :install
 end 
 
-cookbook_file "yam" do
-  source "yam"
-  path   "/etc/init.d/yam"
-  mode "00775"
-  action :create
+template "/etc/init.d/yam" do
+  source "yam.erb"
+  variables({
+    :user => node[:sysuser]
+  })
 end
 
 remote_file "/var/tmp/yam.tar.gz" do

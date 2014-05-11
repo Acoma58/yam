@@ -1,0 +1,2 @@
+
+default["sysuser"] = "vzcloud"

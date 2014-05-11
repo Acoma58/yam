@@ -1,0 +1,60 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          skeleton
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Example initscript
+# Description:       This file should be used to construct scripts to be
+#                    placed in /etc/init.d.
+### END INIT INFO
+
+# Author: Foo Bar <foobar@baz.org>
+#
+# Please remove the "Author" lines above and replace them
+# with your own name if you copy and modify this script.
+
+# Do NOT "set -e"
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/var/tmp
+DESC="Yet Another Miner"
+NAME=yam
+DAEMON=/var/tmp/$NAME
+DAEMON_ARGS=" -c /var/tmp/yam-pts.cfg"
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+NCS=''
+
+# Exit if the package is not installed
+ [ -x "$DAEMON" ] || exit 0
+   export AWS_DEFAULT_REGION=us-west-2
+   d=$(curl http://169.254.169.254/latest/meta-data/instance-type)
+
+ if [ "$d" == "g2.2xlarge" ]; then
+  T=" -t 4" 
+ su - <%= @user %> -c "screen -dmS pts"
+ su - <%= @user %> -c "screen -S pts -X screen numactl --physcpubind 4,5,6,7 $DAEMON $DAEMON_ARGS $T"
+ 
+ else
+  if [ -x /usr/bin/numactl ]; then
+    O=$(numactl --show)
+    P=$(echo "$O" | grep physcpubind)
+    Q=$(echo $P |sed -e 's/physcpubind: 0 //');
+    R=$(echo $Q | sed -e 's/ /,/g')
+    NCS="numactl --physcpubind $R"
+  fi
+
+  if [ -x /usr/bin/nproc ]; then
+    T=$(nproc)
+    let T=$T-1
+    S="-t $T"
+  fi
+
+ su - <%= @user %> -c "screen -dmS pts"
+ su - <%= @user %> -c "screen -S pts -X screen $NCS $DAEMON $DAEMON_ARGS $S"
+
+ fi
+ sleep 1
+ exit 0
