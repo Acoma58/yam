@@ -14,8 +14,7 @@ numactl
 
 Attributes
 ----------
-  None yet.
-TODO: List your cookbook attributes here.
+   node[:sysuser] = ec2-user | vzcloud | ubuntu | etc
 
 e.g.
 #### yam::default
