@@ -7,10 +7,6 @@
 # All rights reserved - Do Not Redistribute
 #
 
-swap_file '/mnt/swap' do 
-  size 1024 
-end
-
 package "screen" do
  action :install
 end 
@@ -21,6 +17,9 @@ end
 
 template "/etc/init.d/yam" do
   source "yam.erb"
+  owner "root"
+  group "root"
+  mode "0755"
   variables({
     :user => node[:sysuser]
   })
