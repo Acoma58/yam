@@ -22,39 +22,50 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin:/var/tmp
 DESC="Yet Another Miner"
 NAME=yam
 DAEMON=/var/tmp/$NAME
-DAEMON_ARGS=" -c /var/tmp/yam-pts.cfg"
+DAEMON_ARGS=" -c /var/tmp/yam-mmc.cfg"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 NCS=''
 
 # Exit if the package is not installed
  [ -x "$DAEMON" ] || exit 0
+
+case "$1" in
+  start)
    export AWS_DEFAULT_REGION=us-west-2
-   d=$(curl http://169.254.169.254/latest/meta-data/instance-type)
-
- if [ "$d" == "g2.2xlarge" ]; then
-  T=" -t 4" 
- su - <%= @user %> -c "screen -dmS pts"
- su - <%= @user %> -c "screen -S pts -X screen numactl --physcpubind 4,5,6,7 $DAEMON $DAEMON_ARGS $T"
+   if [ -x /usr/bin/curl ]; then
+     d=$(curl --connect-timeout 5 --silent http://169.254.169.254/latest/meta-data/instance-type)
+   else
+     d="Nope"
+   fi
+   if [ "$d" == "g2.2xlarge" ]; then
+    T=" -t 4" 
+    su - <%= @user %> -c "screen -dmS pts"
+    su - <%= @user %> -c "screen -S pts -X screen numactl --physcpubind 4,5,6,7 $DAEMON $DAEMON_ARGS $T"
  
- else
-  if [ -x /usr/bin/numactl ]; then
-    O=$(numactl --show)
-    P=$(echo "$O" | grep physcpubind)
-    Q=$(echo $P |sed -e 's/physcpubind: 0 //');
-    R=$(echo $Q | sed -e 's/ /,/g')
-    NCS="numactl --physcpubind $R"
-  fi
+   else
+    if [ -x /usr/bin/numactl ]; then
+      O=$(numactl --show)
+      P=$(echo "$O" | grep physcpubind)
+      Q=$(echo $P |sed -e 's/physcpubind: 0 //');
+      R=$(echo $Q | sed -e 's/ /,/g')
+      NCS="numactl --localalloc --physcpubind $R"
+    fi
 
-  if [ -x /usr/bin/nproc ]; then
-    T=$(nproc)
-    let T=$T-1
-    S="-t $T"
-  fi
+      if [ -x /usr/bin/nproc ]; then
+      T=$(nproc)
+      let T=$T-1
+      S="-t $T"
+    fi
 
- su - <%= @user %> -c "screen -dmS pts"
- su - <%= @user %> -c "screen -S pts -X screen $NCS $DAEMON $DAEMON_ARGS $S"
+   su - <%= @user %> -c "screen -dmS pts"
+   #su - <%= @user %> -c "screen -S pts -X screen $NCS $DAEMON $DAEMON_ARGS $S"
+   su - <%= @user %> -c "screen -S pts -X screen  $DAEMON $DAEMON_ARGS "
 
- fi
- sleep 1
+   fi
+  ;;
+  stop)
+    su - <%= @user %> -c "screen -S pts -p 0 -X quit"
+  ;;
+esac
  exit 0

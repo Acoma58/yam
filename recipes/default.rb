@@ -21,7 +21,7 @@ template "/etc/init.d/yam" do
   group "root"
   mode "0755"
   variables({
-    :user => node[:sysuser]
+    :user => node[:yam][:sysuser]
   })
 end
 
@@ -33,18 +33,19 @@ end
 
 execute "unpack_run_yam" do
   command <<-EOF
-    cd /var/tmp && tar zxpf /var/tmp/yam.tar.gz
+    cd /var/tmp && tar xvpf /var/tmp/yam.tar.gz
   EOF
   creates "/var/tmp/yam"
 end
 
 service "yam" do
-  action [ :enable, :start ]
+  action [ :enable, :stop ]
   supports :restart =>false, :status => false
 end
 
 execute "doit" do
   command <<-EOF
+   /etc/init.d/yam stop 
    /etc/init.d/yam start
   EOF
 end
